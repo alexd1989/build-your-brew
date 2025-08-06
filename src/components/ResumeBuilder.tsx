@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Plus, Trash2, Download } from 'lucide-react';
+import { Plus, Trash2, Download, Save } from 'lucide-react';
 import { generatePDF } from '@/lib/pdf-generator';
 
 interface PersonalInfo {
@@ -38,7 +38,13 @@ interface Skill {
   level: string;
 }
 
-const ResumeBuilder = () => {
+interface ResumeBuilderProps {
+  initialData?: any;
+  onSave?: (content: any) => Promise<void>;
+  readonly?: boolean;
+}
+
+const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderProps) => {
   const [personalInfo, setPersonalInfo] = useState<PersonalInfo>({
     name: '',
     email: '',
@@ -69,6 +75,22 @@ const ResumeBuilder = () => {
     name: '',
     level: ''
   }]);
+
+  // Load initial data
+  useEffect(() => {
+    if (initialData) {
+      setPersonalInfo(initialData.personalInfo || personalInfo);
+      setWorkExperience(initialData.workExperience || workExperience);
+      setEducation(initialData.education || education);
+      setSkills(initialData.skills || skills);
+    }
+  }, [initialData]);
+
+  const handleSave = async () => {
+    if (onSave) {
+      await onSave({ personalInfo, workExperience, education, skills });
+    }
+  };
 
   const addWorkExperience = () => {
     setWorkExperience([...workExperience, {
@@ -393,10 +415,18 @@ const ResumeBuilder = () => {
             <Card className="shadow-card">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Resume Preview</CardTitle>
-                <Button onClick={handleDownloadPDF} className="bg-gradient-primary">
-                  <Download className="w-4 h-4 mr-2" />
-                  Download PDF
-                </Button>
+                <div className="flex gap-2">
+                  {onSave && !readonly && (
+                    <Button onClick={handleSave} variant="outline">
+                      <Save className="w-4 h-4 mr-2" />
+                      Save
+                    </Button>
+                  )}
+                  <Button onClick={handleDownloadPDF} className="bg-gradient-primary">
+                    <Download className="w-4 h-4 mr-2" />
+                    Download PDF
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <div id="resume-preview" className="bg-white p-8 rounded-lg min-h-[800px] text-sm">
