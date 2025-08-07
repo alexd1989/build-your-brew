@@ -9,6 +9,43 @@ interface ResumeData {
     location: string;
     summary: string;
   };
+  certifications?: Array<{
+    licenseType: string;
+    issuingAuthority: string;
+    expiryDate: string;
+    certificateNumber: string;
+  }>;
+  flightHours?: {
+    totalTime: string;
+    picTime: string;
+    simulatorTime: string;
+    instrumentTime: string;
+    crossCountryTime: string;
+    nightTime: string;
+  };
+  aircraftExperience?: Array<{
+    aircraftModel: string;
+    hoursFlown: string;
+    typeRated: boolean;
+    lastFlown: string;
+  }>;
+  medicalInfo?: {
+    medicalClass: string;
+    dateOfIssue: string;
+    expiryDate: string;
+    issuingAuthority: string;
+  };
+  languageProficiency?: Array<{
+    language: string;
+    icaoLevel: string;
+    expiryDate: string;
+  }>;
+  training?: Array<{
+    trainingName: string;
+    provider: string;
+    completionDate: string;
+    expiryDate: string;
+  }>;
   workExperience: Array<{
     company: string;
     position: string;
@@ -24,7 +61,8 @@ interface ResumeData {
   }>;
   skills: Array<{
     name: string;
-    level: string;
+    selected?: boolean;
+    level?: string;
   }>;
 }
 
