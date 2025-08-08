@@ -1131,24 +1131,38 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
               <CardContent>
                 <div id="resume-preview" className="bg-white p-8 rounded-lg min-h-[800px] text-sm">
                   {/* Personal Info Header */}
-                  <div className="text-center mb-6 border-b pb-4">
-                    <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                      {personalInfo.name || 'Your Name'}
-                    </h1>
-                    <div className="text-gray-600 space-y-1">
-                      {personalInfo.email && <div>{personalInfo.email}</div>}
-                      {personalInfo.phone && <div>{personalInfo.phone}</div>}
-                      {personalInfo.location && <div>{personalInfo.location}</div>}
+                  <div className="flex items-start gap-6 mb-8 pb-6 border-b">
+                    {/* Profile Photo */}
+                    {personalInfo.profilePhoto && (
+                      <div className="flex-shrink-0">
+                        <img 
+                          src={personalInfo.profilePhoto} 
+                          alt="Profile" 
+                          className="w-24 h-24 rounded-lg object-cover border-2 border-gray-200"
+                        />
+                      </div>
+                    )}
+                    
+                    {/* Personal Info */}
+                    <div className={personalInfo.profilePhoto ? "flex-1" : "text-center w-full"}>
+                      <h1 className="text-2xl font-bold text-gray-900 mb-3">
+                        {personalInfo.name || 'Your Name'}
+                      </h1>
+                      <div className="text-gray-600 space-y-1 leading-relaxed">
+                        {personalInfo.email && <div>{personalInfo.email}</div>}
+                        {personalInfo.phone && <div>{personalInfo.phone}</div>}
+                        {personalInfo.location && <div>{personalInfo.location}</div>}
+                      </div>
                     </div>
                   </div>
 
                   {/* Summary */}
                   {personalInfo.summary && (
-                    <div className="mb-6">
-                      <h2 className="text-lg font-semibold text-gray-900 mb-2 border-b">
+                    <div className="mb-8">
+                      <h2 className="text-lg font-semibold text-gray-900 mb-4 border-b border-gray-300 pb-2">
                         Professional Summary
                       </h2>
-                      <p className="text-gray-700 leading-relaxed">
+                      <p className="text-gray-700 leading-relaxed text-sm">
                         {personalInfo.summary}
                       </p>
                     </div>
@@ -1189,41 +1203,41 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
                       <h2 className="text-lg font-semibold text-gray-900 mb-3 border-b">
                         Flight Hours
                       </h2>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
                         {flightHours.totalTime && (
-                          <div>
+                          <div className="flex justify-between">
                             <span className="font-medium text-gray-900">Total Time:</span>
-                            <span className="text-gray-700 ml-1">{flightHours.totalTime} hrs</span>
+                            <span className="text-gray-700">{flightHours.totalTime} hrs</span>
                           </div>
                         )}
                         {flightHours.picTime && (
-                          <div>
+                          <div className="flex justify-between">
                             <span className="font-medium text-gray-900">PIC Time:</span>
-                            <span className="text-gray-700 ml-1">{flightHours.picTime} hrs</span>
+                            <span className="text-gray-700">{flightHours.picTime} hrs</span>
                           </div>
                         )}
                         {flightHours.simulatorTime && (
-                          <div>
+                          <div className="flex justify-between">
                             <span className="font-medium text-gray-900">Simulator:</span>
-                            <span className="text-gray-700 ml-1">{flightHours.simulatorTime} hrs</span>
+                            <span className="text-gray-700">{flightHours.simulatorTime} hrs</span>
                           </div>
                         )}
                         {flightHours.instrumentTime && (
-                          <div>
+                          <div className="flex justify-between">
                             <span className="font-medium text-gray-900">Instrument:</span>
-                            <span className="text-gray-700 ml-1">{flightHours.instrumentTime} hrs</span>
+                            <span className="text-gray-700">{flightHours.instrumentTime} hrs</span>
                           </div>
                         )}
                         {flightHours.crossCountryTime && (
-                          <div>
+                          <div className="flex justify-between">
                             <span className="font-medium text-gray-900">Cross Country:</span>
-                            <span className="text-gray-700 ml-1">{flightHours.crossCountryTime} hrs</span>
+                            <span className="text-gray-700">{flightHours.crossCountryTime} hrs</span>
                           </div>
                         )}
                         {flightHours.nightTime && (
-                          <div>
+                          <div className="flex justify-between">
                             <span className="font-medium text-gray-900">Night:</span>
-                            <span className="text-gray-700 ml-1">{flightHours.nightTime} hrs</span>
+                            <span className="text-gray-700">{flightHours.nightTime} hrs</span>
                           </div>
                         )}
                       </div>
@@ -1364,11 +1378,11 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
                                 {exp.startDate} - {exp.endDate || 'Present'}
                               </div>
                             </div>
-                            {exp.description && (
-                              <p className="text-gray-700 mt-2 leading-relaxed">
-                                {exp.description}
-                              </p>
-                            )}
+                             {exp.description && (
+                               <p className="text-gray-700 mt-3 leading-relaxed text-sm">
+                                 {exp.description}
+                               </p>
+                             )}
                           </div>
                         ))}
                       </div>
