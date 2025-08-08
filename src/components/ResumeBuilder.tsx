@@ -6,8 +6,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Trash2, Download, Save, Plane, Award, Clock, Shield } from 'lucide-react';
+import { MultiSelect } from '@/components/ui/multi-select';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
+import { PhotoUpload } from '@/components/ui/photo-upload';
+import { Plus, Trash2, Download, Save, Plane, Award, Clock, Shield, Sparkles } from 'lucide-react';
 import { generatePDF } from '@/lib/pdf-generator';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface PersonalInfo {
   name: string;
@@ -15,6 +20,7 @@ interface PersonalInfo {
   phone: string;
   location: string;
   summary: string;
+  profilePhoto?: string;
 }
 
 interface Certification {
@@ -37,9 +43,11 @@ interface FlightHours {
 interface AircraftExperience {
   id: string;
   aircraftModel: string;
+  customAircraftModel?: string;
   hoursFlown: string;
   typeRated: boolean;
   lastFlown: string;
+  description?: string;
 }
 
 interface MedicalInfo {
@@ -58,9 +66,11 @@ interface LanguageProficiency {
 interface Training {
   id: string;
   trainingName: string;
+  customTrainingName?: string;
   provider: string;
   completionDate: string;
   expiryDate: string;
+  description?: string;
 }
 
 interface WorkExperience {
@@ -100,7 +110,7 @@ const AIRCRAFT_MODELS = [
   'Airbus A320', 'Airbus A330', 'Airbus A340', 'Airbus A350', 'Airbus A380',
   'Boeing 737', 'Boeing 747', 'Boeing 757', 'Boeing 767', 'Boeing 777', 'Boeing 787',
   'Embraer E-Jets', 'Bombardier CRJ', 'ATR 72', 'Cessna 172', 'Cessna 208',
-  'Beechcraft King Air', 'Piper PA-28', 'Diamond DA40', 'Cirrus SR22'
+  'Beechcraft King Air', 'Piper PA-28', 'Diamond DA40', 'Cirrus SR22', 'Other'
 ];
 const AVIATION_SKILLS = [
   'Crew Resource Management (CRM)', 'Communication', 'Leadership', 'Safety Awareness',
@@ -110,7 +120,7 @@ const AVIATION_SKILLS = [
 const TRAINING_TYPES = [
   'Initial Type Rating', 'Recurrent Training', 'Line Training', 'Simulator Training',
   'CRM Training', 'Emergency Procedures', 'Security Training', 'Dangerous Goods',
-  'Fire Fighting', 'First Aid/CPR', 'Upset Prevention and Recovery', 'ETOPS Training'
+  'Fire Fighting', 'First Aid/CPR', 'Upset Prevention and Recovery', 'ETOPS Training', 'Other'
 ];
 
 const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderProps) => {
@@ -119,7 +129,8 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
     email: '',
     phone: '',
     location: '',
-    summary: ''
+    summary: '',
+    profilePhoto: undefined
   });
 
   const [certifications, setCertifications] = useState<Certification[]>([{
@@ -193,6 +204,8 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
     }))
   );
 
+  const [loadingAI, setLoadingAI] = useState<string | null>(null);
+
   // Load initial data
   useEffect(() => {
     if (initialData) {
@@ -226,6 +239,29 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
     }
   };
 
+  const generateAIDescription = async (sectionType: string, data: any, callback: (description: string) => void) => {
+    setLoadingAI(sectionType);
+    try {
+      const { data: result, error } = await supabase.functions.invoke('generate-description', {
+        body: { sectionType, data }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (result?.description) {
+        callback(result.description);
+        toast.success('AI description generated successfully!');
+      }
+    } catch (error) {
+      console.error('Error generating AI description:', error);
+      toast.error('Failed to generate AI description. Please try again.');
+    } finally {
+      setLoadingAI(null);
+    }
+  };
+
   // Certification handlers
   const addCertification = () => {
     setCertifications([...certifications, {
@@ -252,9 +288,11 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
     setAircraftExperience([...aircraftExperience, {
       id: Date.now().toString(),
       aircraftModel: '',
+      customAircraftModel: '',
       hoursFlown: '',
       typeRated: false,
-      lastFlown: ''
+      lastFlown: '',
+      description: ''
     }]);
   };
 
@@ -292,9 +330,11 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
     setTraining([...training, {
       id: Date.now().toString(),
       trainingName: '',
+      customTrainingName: '',
       provider: '',
       completionDate: '',
-      expiryDate: ''
+      expiryDate: '',
+      description: ''
     }]);
   };
 
@@ -352,10 +392,11 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
   };
 
   // Skills handlers
-  const toggleSkill = (id: string) => {
-    setSkills(skills.map(skill => 
-      skill.id === id ? { ...skill, selected: !skill.selected } : skill
-    ));
+  const handleSkillsChange = (selectedValues: string[]) => {
+    setSkills(skills.map(skill => ({
+      ...skill,
+      selected: selectedValues.includes(skill.name)
+    })));
   };
 
   const handleDownloadPDF = () => {
@@ -398,6 +439,13 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="text-center mb-6">
+                  <Label>Profile Photo</Label>
+                  <PhotoUpload
+                    value={personalInfo.profilePhoto}
+                    onChange={(value) => setPersonalInfo({...personalInfo, profilePhoto: value || undefined})}
+                  />
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="name">Full Name</Label>
@@ -636,6 +684,16 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
                           </SelectContent>
                         </Select>
                       </div>
+                      {aircraft.aircraftModel === 'Other' && (
+                        <div>
+                          <Label>Custom Aircraft Model</Label>
+                          <Input
+                            value={aircraft.customAircraftModel || ''}
+                            onChange={(e) => updateAircraftExperience(aircraft.id, 'customAircraftModel', e.target.value)}
+                            placeholder="Enter aircraft model"
+                          />
+                        </div>
+                      )}
                       <div>
                         <Label>Hours Flown</Label>
                         <Input
@@ -661,6 +719,30 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
                         />
                         <Label htmlFor={`typeRated-${aircraft.id}`}>Type Rated</Label>
                       </div>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Label>Description</Label>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => generateAIDescription('aircraftExperience', aircraft, (description) => 
+                            updateAircraftExperience(aircraft.id, 'description', description)
+                          )}
+                          disabled={loadingAI === 'aircraftExperience'}
+                          className="text-xs"
+                        >
+                          <Sparkles className="w-3 h-3 mr-1" />
+                          {loadingAI === 'aircraftExperience' ? 'Generating...' : 'Generate with AI'}
+                        </Button>
+                      </div>
+                      <Textarea
+                        value={aircraft.description || ''}
+                        onChange={(e) => updateAircraftExperience(aircraft.id, 'description', e.target.value)}
+                        placeholder="Brief description of experience with this aircraft..."
+                        rows={2}
+                      />
                     </div>
                   </div>
                 ))}
@@ -861,19 +943,17 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
                 <CardTitle>Aviation Skills & Competencies</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                  {skills.map((skill) => (
-                    <div key={skill.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={skill.id}
-                        checked={skill.selected}
-                        onCheckedChange={() => toggleSkill(skill.id)}
-                      />
-                      <Label htmlFor={skill.id} className="text-sm font-normal">
-                        {skill.name}
-                      </Label>
-                    </div>
-                  ))}
+                <div className="space-y-4">
+                  <div>
+                    <Label>Select Aviation Skills & Competencies</Label>
+                    <MultiSelect
+                      options={skills.map(skill => ({ label: skill.name, value: skill.name }))}
+                      value={skills.filter(skill => skill.selected).map(skill => skill.name)}
+                      onChange={handleSkillsChange}
+                      placeholder="Select skills..."
+                      className="mt-2"
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -938,7 +1018,22 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
                       </div>
                     </div>
                     <div>
-                      <Label>Description</Label>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Label>Description</Label>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => generateAIDescription('workExperience', exp, (description) => 
+                            updateWorkExperience(exp.id, 'description', description)
+                          )}
+                          disabled={loadingAI === 'workExperience'}
+                          className="text-xs"
+                        >
+                          <Sparkles className="w-3 h-3 mr-1" />
+                          {loadingAI === 'workExperience' ? 'Generating...' : 'Generate with AI'}
+                        </Button>
+                      </div>
                       <Textarea
                         value={exp.description}
                         onChange={(e) => updateWorkExperience(exp.id, 'description', e.target.value)}

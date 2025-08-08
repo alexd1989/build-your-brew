@@ -8,6 +8,7 @@ interface ResumeData {
     phone: string;
     location: string;
     summary: string;
+    profilePhoto?: string;
   };
   certifications?: Array<{
     licenseType: string;
