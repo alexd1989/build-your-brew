@@ -41,24 +41,8 @@ export function MultiSelect({
     option.label.toLowerCase().includes(search.toLowerCase())
   )
 
-  React.useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (event.target && !(event.target as Element).closest('.multi-select-wrapper')) {
-        setOpen(false)
-      }
-    }
-    
-    if (open) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-    
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [open])
-
   return (
-    <div className={cn("relative multi-select-wrapper", className)}>
+    <div className={cn("relative", className)}>
       <div
         className="min-h-10 flex flex-wrap gap-1 p-2 border border-input rounded-md cursor-pointer bg-background"
         onClick={() => setOpen(!open)}

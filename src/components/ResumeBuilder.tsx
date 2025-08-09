@@ -9,10 +9,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { PhotoUpload } from '@/components/ui/photo-upload';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
 import { Plus, Trash2, Download, Save, Plane, Award, Clock, Shield, Sparkles } from 'lucide-react';
 import { generatePDF } from '@/lib/pdf-generator';
 import { supabase } from '@/integrations/supabase/client';
@@ -1003,46 +999,23 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
                           placeholder="Captain, First Officer, Flight Attendant"
                         />
                       </div>
-                       <div>
-                         <Label>Start Date</Label>
-                         <Popover>
-                           <PopoverTrigger asChild>
-                             <Button variant="outline" className="w-full justify-start text-left font-normal">
-                               <CalendarIcon className="mr-2 h-4 w-4" />
-                               {exp.startDate ? format(new Date(exp.startDate), "PPP") : "Pick a date"}
-                             </Button>
-                           </PopoverTrigger>
-                           <PopoverContent className="w-auto p-0" align="start">
-                             <Calendar
-                               mode="single"
-                               selected={exp.startDate ? new Date(exp.startDate) : undefined}
-                               onSelect={(date) => updateWorkExperience(exp.id, 'startDate', date ? format(date, "yyyy-MM-dd") : '')}
-                               initialFocus
-                               className="pointer-events-auto"
-                             />
-                           </PopoverContent>
-                         </Popover>
-                       </div>
-                       <div>
-                         <Label>End Date</Label>
-                         <Popover>
-                           <PopoverTrigger asChild>
-                             <Button variant="outline" className="w-full justify-start text-left font-normal">
-                               <CalendarIcon className="mr-2 h-4 w-4" />
-                               {exp.endDate ? format(new Date(exp.endDate), "PPP") : "Present"}
-                             </Button>
-                           </PopoverTrigger>
-                           <PopoverContent className="w-auto p-0" align="start">
-                             <Calendar
-                               mode="single"
-                               selected={exp.endDate ? new Date(exp.endDate) : undefined}
-                               onSelect={(date) => updateWorkExperience(exp.id, 'endDate', date ? format(date, "yyyy-MM-dd") : '')}
-                               initialFocus
-                               className="pointer-events-auto"
-                             />
-                           </PopoverContent>
-                         </Popover>
-                       </div>
+                      <div>
+                        <Label>Start Date</Label>
+                        <Input
+                          type="month"
+                          value={exp.startDate}
+                          onChange={(e) => updateWorkExperience(exp.id, 'startDate', e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label>End Date</Label>
+                        <Input
+                          type="month"
+                          value={exp.endDate}
+                          onChange={(e) => updateWorkExperience(exp.id, 'endDate', e.target.value)}
+                          placeholder="Present"
+                        />
+                      </div>
                     </div>
                     <div>
                       <div className="flex items-center gap-2 mb-2">
@@ -1114,46 +1087,22 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
                           placeholder="Aviation Management, Commercial Pilot License"
                         />
                       </div>
-                       <div>
-                         <Label>Start Date</Label>
-                         <Popover>
-                           <PopoverTrigger asChild>
-                             <Button variant="outline" className="w-full justify-start text-left font-normal">
-                               <CalendarIcon className="mr-2 h-4 w-4" />
-                               {edu.startDate ? format(new Date(edu.startDate), "PPP") : "Pick a date"}
-                             </Button>
-                           </PopoverTrigger>
-                           <PopoverContent className="w-auto p-0" align="start">
-                             <Calendar
-                               mode="single"
-                               selected={edu.startDate ? new Date(edu.startDate) : undefined}
-                               onSelect={(date) => updateEducation(edu.id, 'startDate', date ? format(date, "yyyy-MM-dd") : '')}
-                               initialFocus
-                               className="pointer-events-auto"
-                             />
-                           </PopoverContent>
-                         </Popover>
-                       </div>
-                       <div>
-                         <Label>End Date</Label>
-                         <Popover>
-                           <PopoverTrigger asChild>
-                             <Button variant="outline" className="w-full justify-start text-left font-normal">
-                               <CalendarIcon className="mr-2 h-4 w-4" />
-                               {edu.endDate ? format(new Date(edu.endDate), "PPP") : "Pick a date"}
-                             </Button>
-                           </PopoverTrigger>
-                           <PopoverContent className="w-auto p-0" align="start">
-                             <Calendar
-                               mode="single"
-                               selected={edu.endDate ? new Date(edu.endDate) : undefined}
-                               onSelect={(date) => updateEducation(edu.id, 'endDate', date ? format(date, "yyyy-MM-dd") : '')}
-                               initialFocus
-                               className="pointer-events-auto"
-                             />
-                           </PopoverContent>
-                          </Popover>
-                       </div>
+                      <div>
+                        <Label>Start Date</Label>
+                        <Input
+                          type="month"
+                          value={edu.startDate}
+                          onChange={(e) => updateEducation(edu.id, 'startDate', e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label>End Date</Label>
+                        <Input
+                          type="month"
+                          value={edu.endDate}
+                          onChange={(e) => updateEducation(edu.id, 'endDate', e.target.value)}
+                        />
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -1305,10 +1254,10 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
                         {aircraftExperience.filter(aircraft => aircraft.aircraftModel || aircraft.hoursFlown).map((aircraft) => (
                           <div key={aircraft.id} className="flex justify-between items-start">
                             <div>
-                               <h3 className="font-medium text-gray-900">
-                                 {aircraft.aircraftModel === 'Other' ? aircraft.customAircraftModel || 'Other Aircraft' : aircraft.aircraftModel}
-                                 {aircraft.typeRated && <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Type Rated</span>}
-                               </h3>
+                              <h3 className="font-medium text-gray-900">
+                                {aircraft.aircraftModel}
+                                {aircraft.typeRated && <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Type Rated</span>}
+                              </h3>
                               <div className="text-gray-600 text-sm">
                                 {aircraft.hoursFlown && `${aircraft.hoursFlown} hours`}
                                 {aircraft.lastFlown && ` • Last flown: ${aircraft.lastFlown}`}
@@ -1372,9 +1321,9 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
                         {training.filter(train => train.trainingName || train.provider).map((train) => (
                           <div key={train.id} className="flex justify-between items-start">
                             <div>
-                               <h3 className="font-medium text-gray-900">
-                                 {train.trainingName === 'Other' ? train.customTrainingName || 'Other Training' : train.trainingName}
-                               </h3>
+                              <h3 className="font-medium text-gray-900">
+                                {train.trainingName}
+                              </h3>
                               <div className="text-gray-600 text-sm">
                                 {train.provider && `Provider: ${train.provider}`}
                                 {train.completionDate && ` • Completed: ${train.completionDate}`}
@@ -1425,17 +1374,15 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
                                   {exp.company || 'Company'}
                                 </div>
                               </div>
-                               <div className="text-sm text-gray-500">
-                                 {exp.startDate ? format(new Date(exp.startDate), "MMM yyyy") : ''} - {exp.endDate ? format(new Date(exp.endDate), "MMM yyyy") : 'Present'}
-                               </div>
+                              <div className="text-sm text-gray-500">
+                                {exp.startDate} - {exp.endDate || 'Present'}
+                              </div>
                             </div>
-                              {exp.description && (
-                                <div className="text-gray-700 mt-3 leading-relaxed text-sm space-y-1">
-                                  {exp.description.split('\n').map((line, index) => (
-                                    <p key={index} className="mb-1">{line}</p>
-                                  ))}
-                                </div>
-                              )}
+                             {exp.description && (
+                               <p className="text-gray-700 mt-3 leading-relaxed text-sm">
+                                 {exp.description}
+                               </p>
+                             )}
                           </div>
                         ))}
                       </div>
@@ -1459,9 +1406,9 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
                                 {edu.school || 'Institution'}
                               </div>
                             </div>
-                             <div className="text-sm text-gray-500">
-                               {edu.startDate ? format(new Date(edu.startDate), "MMM yyyy") : ''} - {edu.endDate ? format(new Date(edu.endDate), "MMM yyyy") : ''}
-                             </div>
+                            <div className="text-sm text-gray-500">
+                              {edu.startDate} - {edu.endDate}
+                            </div>
                           </div>
                         ))}
                       </div>
