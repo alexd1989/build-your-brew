@@ -74,12 +74,14 @@ export const generatePDF = async (data: ResumeData) => {
       throw new Error('Resume preview element not found');
     }
 
-    // Create canvas from the resume preview
+    // Create canvas from the resume preview with better spacing
     const canvas = await html2canvas(resumeElement, {
-      scale: 2,
+      scale: 1.5,
       useCORS: true,
       allowTaint: true,
-      backgroundColor: '#ffffff'
+      backgroundColor: '#ffffff',
+      height: resumeElement.scrollHeight,
+      width: resumeElement.scrollWidth
     });
 
     // Create PDF

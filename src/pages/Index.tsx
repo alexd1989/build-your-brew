@@ -111,14 +111,26 @@ const Index = () => {
       <div className="bg-white/10 backdrop-blur-lg border-b border-white/20">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-white">Resume Builder</h1>
-          <div className="flex items-center space-x-4">
+          <nav className="flex items-center space-x-4">
+            <Link to="/features">
+              <Button variant="ghost" className="text-white hover:bg-white/10">
+                Features
+              </Button>
+            </Link>
             {user ? (
-              <Link to="/dashboard">
-                <Button variant="ghost" className="text-white hover:bg-white/10">
-                  <User className="w-4 h-4 mr-2" />
-                  Dashboard
-                </Button>
-              </Link>
+              <>
+                <Link to="/dashboard">
+                  <Button variant="ghost" className="text-white hover:bg-white/10">
+                    <User className="w-4 h-4 mr-2" />
+                    Dashboard
+                  </Button>
+                </Link>
+                <Link to="/admin">
+                  <Button variant="ghost" className="text-white hover:bg-white/10">
+                    Admin
+                  </Button>
+                </Link>
+              </>
             ) : (
               <Link to="/auth">
                 <Button className="bg-white text-primary hover:bg-white/90">
@@ -127,7 +139,7 @@ const Index = () => {
                 </Button>
               </Link>
             )}
-          </div>
+          </nav>
         </div>
       </div>
 
