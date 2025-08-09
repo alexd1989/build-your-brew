@@ -74,23 +74,17 @@ export const generatePDF = async (data: ResumeData) => {
       throw new Error('Resume preview element not found');
     }
 
-    // Create canvas from the resume preview with optimized settings for PDF
+    // Create canvas from the resume preview with better spacing
     const canvas = await html2canvas(resumeElement, {
-      scale: 2,
+      scale: 1.5,
       useCORS: true,
       allowTaint: true,
       backgroundColor: '#ffffff',
       height: resumeElement.scrollHeight,
-      width: resumeElement.scrollWidth,
-      logging: false,
-      removeContainer: true,
-      imageTimeout: 0,
-      scrollX: 0,
-      scrollY: 0,
-      foreignObjectRendering: false
+      width: resumeElement.scrollWidth
     });
 
-    // Create PDF with better compression and quality
+    // Create PDF
     const pdf = new jsPDF('p', 'mm', 'a4');
     const imgWidth = 210; // A4 width in mm
     const pageHeight = 297; // A4 height in mm
@@ -98,20 +92,16 @@ export const generatePDF = async (data: ResumeData) => {
     let heightLeft = imgHeight;
 
     let position = 0;
-    const margin = 5; // Add small margin
 
-    // Convert canvas to high-quality image data
-    const imgData = canvas.toDataURL('image/jpeg', 0.95);
-
-    // Add first page with margin
-    pdf.addImage(imgData, 'JPEG', margin, position + margin, imgWidth - (margin * 2), imgHeight);
+    // Add first page
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
     heightLeft -= pageHeight;
 
     // Add additional pages if needed
     while (heightLeft >= 0) {
       position = heightLeft - imgHeight;
       pdf.addPage();
-      pdf.addImage(imgData, 'JPEG', margin, position + margin, imgWidth - (margin * 2), imgHeight);
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
     }
 
