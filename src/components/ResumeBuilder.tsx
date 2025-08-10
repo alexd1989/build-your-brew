@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { MultiSelect } from '@/components/ui/multi-select';
-import { DateRangePicker } from '@/components/ui/date-range-picker';
+import { DatePicker } from '@/components/ui/date-picker';
 import { PhotoUpload } from '@/components/ui/photo-upload';
 import { Plus, Trash2, Download, Save, Plane, Award, Clock, Shield, Sparkles } from 'lucide-react';
 import { generatePDF } from '@/lib/pdf-generator';
@@ -705,10 +705,10 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
                       </div>
                       <div>
                         <Label>Last Flown</Label>
-                        <Input
-                          type="date"
-                          value={aircraft.lastFlown}
-                          onChange={(e) => updateAircraftExperience(aircraft.id, 'lastFlown', e.target.value)}
+                        <DatePicker
+                          value={aircraft.lastFlown ? new Date(aircraft.lastFlown) : undefined}
+                          onChange={(date) => updateAircraftExperience(aircraft.id, 'lastFlown', date ? date.toISOString().split('T')[0] : '')}
+                          placeholder="Select last flown date"
                         />
                       </div>
                       <div className="flex items-center space-x-2">
@@ -907,6 +907,16 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
                           </SelectContent>
                         </Select>
                       </div>
+                      {train.trainingName === 'Other' && (
+                        <div>
+                          <Label>Custom Training Type</Label>
+                          <Input
+                            value={train.customTrainingName || ''}
+                            onChange={(e) => updateTraining(train.id, 'customTrainingName', e.target.value)}
+                            placeholder="Enter training type"
+                          />
+                        </div>
+                      )}
                       <div>
                         <Label>Training Provider</Label>
                         <Input
@@ -917,20 +927,44 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
                       </div>
                       <div>
                         <Label>Completion Date</Label>
-                        <Input
-                          type="date"
-                          value={train.completionDate}
-                          onChange={(e) => updateTraining(train.id, 'completionDate', e.target.value)}
+                        <DatePicker
+                          value={train.completionDate ? new Date(train.completionDate) : undefined}
+                          onChange={(date) => updateTraining(train.id, 'completionDate', date ? date.toISOString().split('T')[0] : '')}
+                          placeholder="Select completion date"
                         />
                       </div>
                       <div>
                         <Label>Expiry Date</Label>
-                        <Input
-                          type="date"
-                          value={train.expiryDate}
-                          onChange={(e) => updateTraining(train.id, 'expiryDate', e.target.value)}
+                        <DatePicker
+                          value={train.expiryDate ? new Date(train.expiryDate) : undefined}
+                          onChange={(date) => updateTraining(train.id, 'expiryDate', date ? date.toISOString().split('T')[0] : '')}
+                          placeholder="Select expiry date"
                         />
                       </div>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Label>Description</Label>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => generateAIDescription('training', train, (description) => 
+                            updateTraining(train.id, 'description', description)
+                          )}
+                          disabled={loadingAI === 'training'}
+                          className="text-xs"
+                        >
+                          <Sparkles className="w-3 h-3 mr-1" />
+                          {loadingAI === 'training' ? 'Generating...' : 'Generate with AI'}
+                        </Button>
+                      </div>
+                      <Textarea
+                        value={train.description || ''}
+                        onChange={(e) => updateTraining(train.id, 'description', e.target.value)}
+                        placeholder="Brief description of the training..."
+                        rows={2}
+                      />
                     </div>
                   </div>
                 ))}
@@ -1001,19 +1035,18 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
                       </div>
                       <div>
                         <Label>Start Date</Label>
-                        <Input
-                          type="month"
-                          value={exp.startDate}
-                          onChange={(e) => updateWorkExperience(exp.id, 'startDate', e.target.value)}
+                        <DatePicker
+                          value={exp.startDate ? new Date(exp.startDate) : undefined}
+                          onChange={(date) => updateWorkExperience(exp.id, 'startDate', date ? date.toISOString().split('T')[0] : '')}
+                          placeholder="Select start date"
                         />
                       </div>
                       <div>
                         <Label>End Date</Label>
-                        <Input
-                          type="month"
-                          value={exp.endDate}
-                          onChange={(e) => updateWorkExperience(exp.id, 'endDate', e.target.value)}
-                          placeholder="Present"
+                        <DatePicker
+                          value={exp.endDate ? new Date(exp.endDate) : undefined}
+                          onChange={(date) => updateWorkExperience(exp.id, 'endDate', date ? date.toISOString().split('T')[0] : '')}
+                          placeholder="Present or end date"
                         />
                       </div>
                     </div>
@@ -1089,18 +1122,18 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
                       </div>
                       <div>
                         <Label>Start Date</Label>
-                        <Input
-                          type="month"
-                          value={edu.startDate}
-                          onChange={(e) => updateEducation(edu.id, 'startDate', e.target.value)}
+                        <DatePicker
+                          value={edu.startDate ? new Date(edu.startDate) : undefined}
+                          onChange={(date) => updateEducation(edu.id, 'startDate', date ? date.toISOString().split('T')[0] : '')}
+                          placeholder="Select start date"
                         />
                       </div>
                       <div>
                         <Label>End Date</Label>
-                        <Input
-                          type="month"
-                          value={edu.endDate}
-                          onChange={(e) => updateEducation(edu.id, 'endDate', e.target.value)}
+                        <DatePicker
+                          value={edu.endDate ? new Date(edu.endDate) : undefined}
+                          onChange={(date) => updateEducation(edu.id, 'endDate', date ? date.toISOString().split('T')[0] : '')}
+                          placeholder="Select end date"
                         />
                       </div>
                     </div>
@@ -1129,7 +1162,7 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
                 </div>
               </CardHeader>
               <CardContent>
-                <div id="resume-preview" className="bg-white p-8 rounded-lg min-h-[800px] text-sm">
+                <div id="resume-preview" className="bg-white p-8 rounded-lg min-h-[800px] text-sm leading-relaxed" style={{ lineHeight: '1.6' }}>
                   {/* Personal Info Header */}
                   <div className="flex items-start gap-6 mb-8 pb-6 border-b">
                     {/* Profile Photo */}
@@ -1159,12 +1192,12 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
                   {/* Summary */}
                   {personalInfo.summary && (
                     <div className="mb-8">
-                      <h2 className="text-lg font-semibold text-gray-900 mb-4 border-b border-gray-300 pb-2">
-                        Professional Summary
-                      </h2>
-                      <p className="text-gray-700 leading-relaxed text-sm">
-                        {personalInfo.summary}
-                      </p>
+                       <h2 className="text-lg font-semibold text-gray-900 mb-4 border-b border-gray-300 pb-2">
+                         Professional Summary
+                       </h2>
+                       <p className="text-gray-700 leading-relaxed text-sm" style={{ lineHeight: '1.7' }}>
+                         {personalInfo.summary}
+                       </p>
                     </div>
                   )}
 
@@ -1253,16 +1286,21 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
                       <div className="space-y-3">
                         {aircraftExperience.filter(aircraft => aircraft.aircraftModel || aircraft.hoursFlown).map((aircraft) => (
                           <div key={aircraft.id} className="flex justify-between items-start">
-                            <div>
-                              <h3 className="font-medium text-gray-900">
-                                {aircraft.aircraftModel}
-                                {aircraft.typeRated && <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Type Rated</span>}
-                              </h3>
-                              <div className="text-gray-600 text-sm">
-                                {aircraft.hoursFlown && `${aircraft.hoursFlown} hours`}
-                                {aircraft.lastFlown && ` • Last flown: ${aircraft.lastFlown}`}
-                              </div>
-                            </div>
+                             <div>
+                               <h3 className="font-medium text-gray-900">
+                                 {aircraft.aircraftModel === 'Other' ? aircraft.customAircraftModel : aircraft.aircraftModel}
+                                 {aircraft.typeRated && <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Type Rated</span>}
+                               </h3>
+                               <div className="text-gray-600 text-sm">
+                                 {aircraft.hoursFlown && `${aircraft.hoursFlown} hours`}
+                                 {aircraft.lastFlown && ` • Last flown: ${aircraft.lastFlown}`}
+                               </div>
+                               {aircraft.description && (
+                                 <div className="text-gray-700 text-sm mt-2 leading-relaxed">
+                                   {aircraft.description}
+                                 </div>
+                               )}
+                             </div>
                           </div>
                         ))}
                       </div>
@@ -1320,15 +1358,20 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
                       <div className="space-y-3">
                         {training.filter(train => train.trainingName || train.provider).map((train) => (
                           <div key={train.id} className="flex justify-between items-start">
-                            <div>
-                              <h3 className="font-medium text-gray-900">
-                                {train.trainingName}
-                              </h3>
-                              <div className="text-gray-600 text-sm">
-                                {train.provider && `Provider: ${train.provider}`}
-                                {train.completionDate && ` • Completed: ${train.completionDate}`}
-                              </div>
-                            </div>
+                             <div>
+                               <h3 className="font-medium text-gray-900">
+                                 {train.trainingName === 'Other' ? train.customTrainingName : train.trainingName}
+                               </h3>
+                               <div className="text-gray-600 text-sm">
+                                 {train.provider && `Provider: ${train.provider}`}
+                                 {train.completionDate && ` • Completed: ${train.completionDate}`}
+                               </div>
+                               {train.description && (
+                                 <div className="text-gray-700 text-sm mt-2 leading-relaxed">
+                                   {train.description}
+                                 </div>
+                               )}
+                             </div>
                             {train.expiryDate && (
                               <div className="text-sm text-gray-500">
                                 Expires: {train.expiryDate}

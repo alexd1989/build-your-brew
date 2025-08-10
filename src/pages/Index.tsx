@@ -112,6 +112,24 @@ const Index = () => {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-white">Resume Builder</h1>
           <div className="flex items-center space-x-4">
+            <nav className="hidden md:flex items-center space-x-4 mr-4">
+              <Link to="/" className="text-white hover:text-white/80 transition-colors">
+                Home
+              </Link>
+              <Link to="/features" className="text-white hover:text-white/80 transition-colors">
+                Features
+              </Link>
+              {user && (
+                <>
+                  <Link to="/dashboard" className="text-white hover:text-white/80 transition-colors">
+                    Dashboard
+                  </Link>
+                  <Link to="/admin" className="text-white hover:text-white/80 transition-colors">
+                    Admin
+                  </Link>
+                </>
+              )}
+            </nav>
             {user ? (
               <Link to="/dashboard">
                 <Button variant="ghost" className="text-white hover:bg-white/10">

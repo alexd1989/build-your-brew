@@ -23,6 +23,21 @@ export function MultiSelect({
 }: MultiSelectProps) {
   const [open, setOpen] = React.useState(false)
   const [search, setSearch] = React.useState("")
+  const containerRef = React.useRef<HTMLDivElement>(null)
+
+  // Close dropdown when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpen(false)
+      }
+    }
+
+    if (open) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [open])
 
   const handleSelect = (optionValue: string) => {
     if (value.includes(optionValue)) {
@@ -42,7 +57,7 @@ export function MultiSelect({
   )
 
   return (
-    <div className={cn("relative", className)}>
+    <div ref={containerRef} className={cn("relative", className)}>
       <div
         className="min-h-10 flex flex-wrap gap-1 p-2 border border-input rounded-md cursor-pointer bg-background"
         onClick={() => setOpen(!open)}

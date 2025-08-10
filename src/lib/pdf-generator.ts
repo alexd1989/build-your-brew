@@ -26,9 +26,11 @@ interface ResumeData {
   };
   aircraftExperience?: Array<{
     aircraftModel: string;
+    customAircraftModel?: string;
     hoursFlown: string;
     typeRated: boolean;
     lastFlown: string;
+    description?: string;
   }>;
   medicalInfo?: {
     medicalClass: string;
@@ -43,9 +45,11 @@ interface ResumeData {
   }>;
   training?: Array<{
     trainingName: string;
+    customTrainingName?: string;
     provider: string;
     completionDate: string;
     expiryDate: string;
+    description?: string;
   }>;
   workExperience: Array<{
     company: string;
@@ -74,12 +78,17 @@ export const generatePDF = async (data: ResumeData) => {
       throw new Error('Resume preview element not found');
     }
 
-    // Create canvas from the resume preview
+    // Create canvas from the resume preview with better quality settings
     const canvas = await html2canvas(resumeElement, {
-      scale: 2,
+      scale: 3,
       useCORS: true,
       allowTaint: true,
-      backgroundColor: '#ffffff'
+      backgroundColor: '#ffffff',
+      logging: false,
+      width: resumeElement.scrollWidth,
+      height: resumeElement.scrollHeight,
+      windowWidth: resumeElement.scrollWidth,
+      windowHeight: resumeElement.scrollHeight
     });
 
     // Create PDF
