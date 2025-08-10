@@ -78,17 +78,41 @@ export const generatePDF = async (data: ResumeData) => {
       throw new Error('Resume preview element not found');
     }
 
-    // Create canvas from the resume preview with better quality settings
+    // Ensure the element is properly rendered before capturing
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Create canvas from the resume preview with optimized settings
     const canvas = await html2canvas(resumeElement, {
-      scale: 3,
+      scale: 2,
       useCORS: true,
       allowTaint: true,
       backgroundColor: '#ffffff',
       logging: false,
       width: resumeElement.scrollWidth,
       height: resumeElement.scrollHeight,
-      windowWidth: resumeElement.scrollWidth,
-      windowHeight: resumeElement.scrollHeight
+      windowWidth: 1200,
+      windowHeight: 1600,
+      foreignObjectRendering: true,
+      onclone: (clonedDoc) => {
+        // Fix text rendering in cloned document
+        const clonedElement = clonedDoc.getElementById('resume-preview');
+        if (clonedElement) {
+          clonedElement.style.fontSize = '14px';
+          clonedElement.style.lineHeight = '1.4';
+          clonedElement.style.fontFamily = 'Arial, sans-serif';
+          
+          // Fix any overlapping elements
+          const elements = clonedElement.querySelectorAll('*');
+          elements.forEach((el: Element) => {
+            const htmlEl = el as HTMLElement;
+            htmlEl.style.overflow = 'visible';
+            htmlEl.style.textOverflow = 'clip';
+            htmlEl.style.whiteSpace = 'normal';
+            htmlEl.style.wordWrap = 'break-word';
+            htmlEl.style.boxSizing = 'border-box';
+          });
+        }
+      }
     });
 
     // Create PDF

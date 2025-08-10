@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { 
   FileText, 
   Download, 
@@ -13,10 +14,13 @@ import {
   Clock,
   Globe,
   Layout,
-  Edit
+  Edit,
+  User,
+  LogOut
 } from "lucide-react";
 
 const Features = () => {
+  const { user, signOut } = useAuth();
   const features = [
     {
       icon: <FileText className="h-8 w-8 text-primary" />,
@@ -96,12 +100,32 @@ const Features = () => {
               <Link to="/features" className="text-sm font-medium hover:text-primary transition-colors">
                 Features
               </Link>
-              <Link to="/auth" className="text-sm font-medium hover:text-primary transition-colors">
-                Sign In
-              </Link>
-              <Button asChild>
-                <Link to="/dashboard">Get Started</Link>
-              </Button>
+              {user ? (
+                <>
+                  <Link to="/dashboard" className="text-sm font-medium hover:text-primary transition-colors">
+                    Dashboard
+                  </Link>
+                  <Button variant="ghost" onClick={signOut} className="text-sm font-medium hover:text-primary transition-colors">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </Button>
+                  <Button asChild>
+                    <Link to="/dashboard">
+                      <User className="w-4 h-4 mr-2" />
+                      Dashboard
+                    </Link>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link to="/auth" className="text-sm font-medium hover:text-primary transition-colors">
+                    Sign In
+                  </Link>
+                  <Button asChild>
+                    <Link to="/dashboard">Get Started</Link>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>

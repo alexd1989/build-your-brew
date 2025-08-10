@@ -206,7 +206,7 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
 
   const [loadingAI, setLoadingAI] = useState<string | null>(null);
 
-  // Load initial data
+  // Load initial data or from localStorage
   useEffect(() => {
     if (initialData) {
       setPersonalInfo(initialData.personalInfo || personalInfo);
@@ -219,8 +219,45 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
       setWorkExperience(initialData.workExperience || workExperience);
       setEducation(initialData.education || education);
       setSkills(initialData.skills || skills);
+    } else {
+      // Load from localStorage if no initialData
+      const savedData = localStorage.getItem('resumeBuilderData');
+      if (savedData) {
+        try {
+          const parsed = JSON.parse(savedData);
+          setPersonalInfo(parsed.personalInfo || personalInfo);
+          setCertifications(parsed.certifications || certifications);
+          setFlightHours(parsed.flightHours || flightHours);
+          setAircraftExperience(parsed.aircraftExperience || aircraftExperience);
+          setMedicalInfo(parsed.medicalInfo || medicalInfo);
+          setLanguageProficiency(parsed.languageProficiency || languageProficiency);
+          setTraining(parsed.training || training);
+          setWorkExperience(parsed.workExperience || workExperience);
+          setEducation(parsed.education || education);
+          setSkills(parsed.skills || skills);
+        } catch (error) {
+          console.error('Failed to parse saved resume data:', error);
+        }
+      }
     }
   }, [initialData]);
+
+  // Auto-save to localStorage
+  useEffect(() => {
+    const dataToSave = {
+      personalInfo, 
+      certifications, 
+      flightHours, 
+      aircraftExperience, 
+      medicalInfo, 
+      languageProficiency, 
+      training, 
+      workExperience, 
+      education, 
+      skills
+    };
+    localStorage.setItem('resumeBuilderData', JSON.stringify(dataToSave));
+  }, [personalInfo, certifications, flightHours, aircraftExperience, medicalInfo, languageProficiency, training, workExperience, education, skills]);
 
   const handleSave = async () => {
     if (onSave) {
