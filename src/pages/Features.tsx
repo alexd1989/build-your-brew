@@ -89,47 +89,6 @@ const Features = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20">
-      {/* Navigation */}
-      <nav className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="text-2xl font-bold text-primary">
-              Resume Builder
-            </Link>
-            <div className="flex items-center gap-4">
-              <Link to="/features" className="text-sm font-medium hover:text-primary transition-colors">
-                Features
-              </Link>
-              {user ? (
-                <>
-                  <Link to="/dashboard" className="text-sm font-medium hover:text-primary transition-colors">
-                    Dashboard
-                  </Link>
-                  <Button variant="ghost" onClick={signOut} className="text-sm font-medium hover:text-primary transition-colors">
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Sign Out
-                  </Button>
-                  <Button asChild>
-                    <Link to="/dashboard">
-                      <User className="w-4 h-4 mr-2" />
-                      Dashboard
-                    </Link>
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Link to="/auth" className="text-sm font-medium hover:text-primary transition-colors">
-                    Sign In
-                  </Link>
-                  <Button asChild>
-                    <Link to="/dashboard">Get Started</Link>
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </nav>
 
       {/* Hero Section */}
       <section className="py-20 px-4">

@@ -107,48 +107,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-primary">
-      {/* Header */}
-      <div className="bg-white/10 backdrop-blur-lg border-b border-white/20">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-white">Resume Builder</h1>
-          <div className="flex items-center space-x-4">
-            <nav className="hidden md:flex items-center space-x-4 mr-4">
-              <Link to="/" className="text-white hover:text-white/80 transition-colors">
-                Home
-              </Link>
-              <Link to="/features" className="text-white hover:text-white/80 transition-colors">
-                Features
-              </Link>
-              {user && (
-                <>
-                  <Link to="/dashboard" className="text-white hover:text-white/80 transition-colors">
-                    Dashboard
-                  </Link>
-                  <Link to="/admin" className="text-white hover:text-white/80 transition-colors">
-                    Admin
-                  </Link>
-                </>
-              )}
-            </nav>
-            {user ? (
-              <Link to="/dashboard">
-                <Button variant="ghost" className="text-white hover:bg-white/10">
-                  <User className="w-4 h-4 mr-2" />
-                  Dashboard
-                </Button>
-              </Link>
-            ) : (
-              <Link to="/auth">
-                <Button className="bg-white text-primary hover:bg-white/90">
-                  <LogIn className="w-4 h-4 mr-2" />
-                  Sign In
-                </Button>
-              </Link>
-            )}
-          </div>
-        </div>
-      </div>
-
       {/* Content */}
       <ResumeBuilder 
         initialData={resumeData?.content} 
