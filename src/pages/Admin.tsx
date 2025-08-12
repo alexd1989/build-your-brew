@@ -4,10 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Users, FileText, Shield, ShieldOff } from 'lucide-react';
+import { ArrowLeft, Users, FileText, Shield, ShieldOff, Eye, UserX, UserCheck } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface UserProfile {
@@ -18,6 +20,13 @@ interface UserProfile {
   email?: string;
   role?: string;
   resume_count?: number;
+  is_active?: boolean;
+  resumes?: Array<{
+    id: string;
+    title: string;
+    created_at: string;
+    updated_at: string;
+  }>;
 }
 
 const Admin = () => {
@@ -41,7 +50,7 @@ const Admin = () => {
 
   const fetchUsers = async () => {
     try {
-      // Get profiles with user roles and resume counts
+      // Get profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select(`
@@ -53,6 +62,10 @@ const Admin = () => {
 
       if (profilesError) throw profilesError;
 
+      // Get auth users to check if they're active
+      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      if (authError) throw authError;
+
       // Get user roles
       const { data: roles, error: rolesError } = await supabase
         .from('user_roles')
@@ -60,28 +73,35 @@ const Admin = () => {
 
       if (rolesError) throw rolesError;
 
-      // Get resume counts
-      const { data: resumeCounts, error: resumeError } = await supabase
+      // Get resumes
+      const { data: resumes, error: resumeError } = await supabase
         .from('resumes')
-        .select('user_id');
+        .select('id, user_id, title, created_at, updated_at');
 
       if (resumeError) throw resumeError;
 
-      // Count resumes per user
-      const resumeCountMap = resumeCounts?.reduce((acc, resume) => {
-        acc[resume.user_id] = (acc[resume.user_id] || 0) + 1;
+      // Group resumes by user
+      const resumesByUser = resumes?.reduce((acc, resume) => {
+        if (!acc[resume.user_id]) {
+          acc[resume.user_id] = [];
+        }
+        acc[resume.user_id].push(resume);
         return acc;
-      }, {} as Record<string, number>) || {};
+      }, {} as Record<string, any[]>) || {};
 
       // Combine data
       const usersWithDetails = profiles?.map(profile => {
+        const authUser = authUsers.users.find(u => u.id === profile.user_id);
         const userRole = roles?.find(role => role.user_id === profile.user_id)?.role || 'user';
-        const resumeCount = resumeCountMap[profile.user_id] || 0;
+        const userResumes = resumesByUser[profile.user_id] || [];
         
         return {
           ...profile,
+          email: authUser?.email,
           role: userRole,
-          resume_count: resumeCount
+          resume_count: userResumes.length,
+          is_active: !authUser?.banned_until,
+          resumes: userResumes
         };
       }) || [];
 
@@ -130,6 +150,59 @@ const Admin = () => {
       toast({
         title: "Error",
         description: "Failed to update user role",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const toggleUserStatus = async (userId: string, isActive: boolean) => {
+    try {
+      if (isActive) {
+        // Unban user
+        const { error } = await supabase.auth.admin.updateUserById(userId, {
+          ban_duration: 'none'
+        });
+        if (error) throw error;
+      } else {
+        // Ban user
+        const { error } = await supabase.auth.admin.updateUserById(userId, {
+          ban_duration: '876000h' // 100 years
+        });
+        if (error) throw error;
+      }
+
+      // Update local state
+      setUsers(users.map(user => 
+        user.user_id === userId 
+          ? { ...user, is_active: isActive }
+          : user
+      ));
+
+      toast({
+        title: "Success",
+        description: `User ${isActive ? 'activated' : 'deactivated'} successfully`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update user status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const impersonateUser = async (userId: string) => {
+    try {
+      // This would require additional backend implementation
+      // For now, we'll show a placeholder
+      toast({
+        title: "Feature Coming Soon",
+        description: "User impersonation will be available in a future update",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to impersonate user",
         variant: "destructive",
       });
     }
@@ -210,8 +283,10 @@ const Admin = () => {
               <TableHeader>
                 <TableRow className="border-white/20">
                   <TableHead className="text-white">Display Name</TableHead>
+                  <TableHead className="text-white">Email</TableHead>
                   <TableHead className="text-white">User ID</TableHead>
                   <TableHead className="text-white">Role</TableHead>
+                  <TableHead className="text-white">Status</TableHead>
                   <TableHead className="text-white">Resumes</TableHead>
                   <TableHead className="text-white">Joined</TableHead>
                   <TableHead className="text-white">Actions</TableHead>
@@ -222,6 +297,9 @@ const Admin = () => {
                   <TableRow key={userProfile.id} className="border-white/20">
                     <TableCell className="text-white">
                       {userProfile.display_name || 'No name'}
+                    </TableCell>
+                    <TableCell className="text-white/70">
+                      {userProfile.email || 'No email'}
                     </TableCell>
                     <TableCell className="text-white/70 font-mono text-xs">
                       {userProfile.user_id.slice(0, 8)}...
@@ -239,25 +317,80 @@ const Admin = () => {
                         {userProfile.role}
                       </Badge>
                     </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          checked={userProfile.is_active}
+                          onCheckedChange={(checked) => toggleUserStatus(userProfile.user_id, checked)}
+                        />
+                        <span className="text-white/70 text-sm">
+                          {userProfile.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
+                    </TableCell>
                     <TableCell className="text-white">
-                      {userProfile.resume_count || 0}
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="ghost" size="sm" className="text-white hover:bg-white/10">
+                            <Eye className="w-4 h-4 mr-1" />
+                            {userProfile.resume_count || 0}
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl">
+                          <DialogHeader>
+                            <DialogTitle>
+                              Resumes by {userProfile.display_name || userProfile.email}
+                            </DialogTitle>
+                          </DialogHeader>
+                          <div className="max-h-96 overflow-y-auto">
+                            {userProfile.resumes && userProfile.resumes.length > 0 ? (
+                              <div className="space-y-2">
+                                {userProfile.resumes.map((resume) => (
+                                  <div key={resume.id} className="p-3 border rounded-lg">
+                                    <h4 className="font-medium">{resume.title}</h4>
+                                    <p className="text-sm text-muted-foreground">
+                                      Created: {new Date(resume.created_at).toLocaleDateString()}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                      Updated: {new Date(resume.updated_at).toLocaleDateString()}
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-muted-foreground">No resumes found</p>
+                            )}
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                     </TableCell>
                     <TableCell className="text-white/70">
                       {new Date(userProfile.created_at).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
-                      <Select
-                        value={userProfile.role}
-                        onValueChange={(value) => updateUserRole(userProfile.user_id, value)}
-                      >
-                        <SelectTrigger className="w-32 bg-white/10 border-white/20 text-white">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="user">User</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <div className="flex items-center space-x-2">
+                        <Select
+                          value={userProfile.role}
+                          onValueChange={(value) => updateUserRole(userProfile.user_id, value)}
+                        >
+                          <SelectTrigger className="w-24 bg-white/10 border-white/20 text-white">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="user">User</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => impersonateUser(userProfile.user_id)}
+                          className="text-white hover:bg-white/10"
+                          title="Impersonate User"
+                        >
+                          <UserCheck className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
