@@ -63,6 +63,8 @@ const Settings = () => {
           user_id: user.id,
           display_name: displayName,
           updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id'
         });
 
       if (error) throw error;
@@ -72,9 +74,10 @@ const Settings = () => {
         description: "Profile updated successfully",
       });
     } catch (error) {
+      console.error('Profile update error:', error);
       toast({
         title: "Error",
-        description: "Failed to update profile",
+        description: error.message || "Failed to update profile",
         variant: "destructive",
       });
     } finally {

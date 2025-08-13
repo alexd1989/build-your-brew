@@ -6,13 +6,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, FileText, Calendar, Trash2, Edit, Settings, Shield } from 'lucide-react';
+import { Plus, FileText, Calendar, Trash2, Edit } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { User } from 'lucide-react';
 
 interface Resume {
   id: string;
@@ -22,7 +19,7 @@ interface Resume {
 }
 
 const Dashboard = () => {
-  const { user, signOut, isAdmin } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [resumes, setResumes] = useState<Resume[]>([]);
@@ -114,11 +111,6 @@ const Dashboard = () => {
     }
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-primary flex items-center justify-center">
@@ -135,41 +127,6 @@ const Dashboard = () => {
           <div>
             <h1 className="text-3xl font-bold text-white mb-2">Dashboard</h1>
             <p className="text-white/80">Welcome back, {user?.email}</p>
-          </div>
-          <div className="flex items-center">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full bg-white/10 hover:bg-white/20">
-                  <Avatar className="h-10 w-10">
-                    <AvatarFallback className="bg-white/20 text-white">
-                      <User className="h-4 w-4" />
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <div className="flex items-center justify-start gap-2 p-2">
-                  <div className="flex flex-col space-y-1 leading-none">
-                    <p className="font-medium">{user?.email}</p>
-                  </div>
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate('/settings')}>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </DropdownMenuItem>
-                {isAdmin && (
-                  <DropdownMenuItem onClick={() => navigate('/admin')}>
-                    <Shield className="mr-2 h-4 w-4" />
-                    <span>Admin Panel</span>
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut}>
-                  <span>Log out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
 
