@@ -12,6 +12,7 @@ import Features from "./pages/Features";
 import NotFound from "./pages/NotFound";
 import Header from "@/components/layout/Header";
 import Settings from "./pages/Settings";
+import TestAuth from "./test-auth";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/features" element={<Features />} />
             <Route path="/builder/:id" element={<Index />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/test-auth" element={<TestAuth />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

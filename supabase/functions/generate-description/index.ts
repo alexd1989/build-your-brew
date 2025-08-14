@@ -27,35 +27,33 @@ serve(async (req) => {
 
     switch (sectionType) {
       case 'workExperience':
-        prompt = `Generate a professional aviation industry job description for the following position:
+        prompt = `Generate a professional job description for the following position:
         
-Position: ${data.position || 'Aviation Professional'}
-Company: ${data.company || 'Aviation Company'}
+Position: ${data.position || 'Professional'}
+Company: ${data.company || 'Company'}
 Start Date: ${data.startDate || 'N/A'}
 End Date: ${data.endDate || 'Present'}
 
-Please write a concise, professional description (2-3 sentences) highlighting key responsibilities and achievements in aviation operations. Focus on safety, compliance, teamwork, and technical skills relevant to the aviation industry.`
+Please write a concise, professional description (2-3 sentences) highlighting key responsibilities and achievements. Focus on leadership, problem-solving, teamwork, and technical skills relevant to the role.`
         break
 
-      case 'aircraftExperience':
-        prompt = `Generate a brief professional description for aviation aircraft experience:
+      case 'education':
+        prompt = `Generate a brief description for education:
         
-Aircraft Model: ${data.aircraftModel || 'Aircraft'}
-Hours Flown: ${data.hoursFlown || 'N/A'}
-Type Rated: ${data.typeRated ? 'Yes' : 'No'}
-Last Flown: ${data.lastFlown || 'N/A'}
+Degree: ${data.degree || 'Degree'}
+School: ${data.school || 'Institution'}
+Start Date: ${data.startDate || 'N/A'}
+End Date: ${data.endDate || 'N/A'}
 
-Please write a short professional description (1-2 sentences) that would be suitable for an aviation resume, emphasizing proficiency and experience level.`
+Please write a short professional description (1-2 sentences) that would be suitable for a resume, emphasizing academic achievements and relevant coursework.`
         break
 
-      case 'training':
-        prompt = `Generate a brief description for aviation training:
+      case 'skills':
+        prompt = `Generate a brief description for skills section:
         
-Training Name: ${data.trainingName || 'Aviation Training'}
-Provider: ${data.provider || 'Training Provider'}
-Completion Date: ${data.completionDate || 'N/A'}
+Skills: ${Array.isArray(data.skills) ? data.skills.join(', ') : data.skills || 'Various skills'}
 
-Please write a concise description (1-2 sentences) highlighting the value and relevance of this training to aviation operations and safety.`
+Please write a concise description (1-2 sentences) highlighting proficiency and experience with these skills.`
         break
 
       default:
@@ -73,7 +71,7 @@ Please write a concise description (1-2 sentences) highlighting the value and re
         messages: [
           {
             role: 'system',
-            content: 'You are an expert aviation industry resume writer. Generate professional, concise descriptions that highlight aviation expertise, safety focus, and industry-specific skills.'
+            content: 'You are an expert resume writer. Generate professional, concise descriptions that highlight expertise, achievements, and relevant skills.'
           },
           {
             role: 'user',
