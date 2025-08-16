@@ -35,6 +35,24 @@ const Admin = () => {
   const { toast } = useToast();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Test Supabase connection
+  const testSupabaseConnection = async () => {
+    try {
+      console.log('Testing Supabase connection...');
+      const { data, error } = await supabase.from('profiles').select('count').limit(1);
+      if (error) {
+        console.error('Supabase connection test failed:', error);
+        return `Connection failed: ${error.message}`;
+      }
+      console.log('Supabase connection test successful');
+      return 'Connection successful';
+    } catch (err) {
+      console.error('Supabase connection test error:', err);
+      return `Connection error: ${err instanceof Error ? err.message : 'Unknown error'}`;
+    }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -50,6 +68,8 @@ const Admin = () => {
 
   const fetchUsers = async () => {
     try {
+      console.log('Starting to fetch users...');
+      
       // Get profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
@@ -60,25 +80,52 @@ const Admin = () => {
           created_at
         `);
 
-      if (profilesError) throw profilesError;
+      if (profilesError) {
+        console.error('Profiles error:', profilesError);
+        throw new Error(`Failed to fetch profiles: ${profilesError.message}`);
+      }
 
-      // Get auth users to check if they're active
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
-      if (authError) throw authError;
+      console.log('Profiles fetched:', profiles?.length || 0);
 
       // Get user roles
       const { data: roles, error: rolesError } = await supabase
         .from('user_roles')
         .select('user_id, role');
 
-      if (rolesError) throw rolesError;
+      if (rolesError) {
+        console.error('Roles error:', rolesError);
+        throw new Error(`Failed to fetch user roles: ${rolesError.message}`);
+      }
+
+      console.log('Roles fetched:', roles?.length || 0);
 
       // Get resumes
       const { data: resumes, error: resumeError } = await supabase
         .from('resumes')
         .select('id, user_id, title, created_at, updated_at');
 
-      if (resumeError) throw resumeError;
+      if (resumeError) {
+        console.error('Resumes error:', resumeError);
+        throw new Error(`Failed to fetch resumes: ${resumeError.message}`);
+      }
+
+      console.log('Resumes fetched:', resumes?.length || 0);
+
+      // Try to get auth users (this might fail if admin API is not available)
+      let authUsers: any[] = [];
+      try {
+        const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
+        if (authError) {
+          console.warn('Admin API not available:', authError.message);
+          // Continue without auth user data
+        } else {
+          authUsers = authData.users || [];
+          console.log('Auth users fetched:', authUsers.length);
+        }
+      } catch (adminError) {
+        console.warn('Admin API not available:', adminError);
+        // Continue without auth user data
+      }
 
       // Group resumes by user
       const resumesByUser = resumes?.reduce((acc, resume) => {
@@ -91,25 +138,29 @@ const Admin = () => {
 
       // Combine data
       const usersWithDetails = profiles?.map(profile => {
-        const authUser = authUsers.users.find(u => u.id === profile.user_id);
+        const authUser = authUsers.find(u => u.id === profile.user_id);
         const userRole = roles?.find(role => role.user_id === profile.user_id)?.role || 'user';
         const userResumes = resumesByUser[profile.user_id] || [];
         
         return {
           ...profile,
-          email: authUser?.email,
+          email: authUser?.email || 'Email not available',
           role: userRole,
           resume_count: userResumes.length,
-          is_active: !authUser?.banned_until,
+          is_active: authUser ? !authUser.banned_until : true, // Default to true if no auth user data
           resumes: userResumes
         };
       }) || [];
 
+      console.log('Combined users data:', usersWithDetails.length);
       setUsers(usersWithDetails);
     } catch (error) {
+      console.error('Error in fetchUsers:', error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to fetch users";
+      setError(errorMessage);
       toast({
         title: "Error",
-        description: "Failed to fetch users",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -157,18 +208,28 @@ const Admin = () => {
 
   const toggleUserStatus = async (userId: string, isActive: boolean) => {
     try {
-      if (isActive) {
-        // Unban user
-        const { error } = await supabase.auth.admin.updateUserById(userId, {
-          ban_duration: 'none'
+      // Try to use admin API if available
+      try {
+        if (isActive) {
+          // Unban user
+          const { error } = await supabase.auth.admin.updateUserById(userId, {
+            ban_duration: 'none'
+          });
+          if (error) throw error;
+        } else {
+          // Ban user
+          const { error } = await supabase.auth.admin.updateUserById(userId, {
+            ban_duration: '876000h' // 100 years
+          });
+          if (error) throw error;
+        }
+      } catch (adminError) {
+        console.warn('Admin API not available for user status update:', adminError);
+        toast({
+          title: "Warning",
+          description: "Admin API not available. User status change may not be applied.",
+          variant: "default",
         });
-        if (error) throw error;
-      } else {
-        // Ban user
-        const { error } = await supabase.auth.admin.updateUserById(userId, {
-          ban_duration: '876000h' // 100 years
-        });
-        if (error) throw error;
       }
 
       // Update local state
@@ -183,9 +244,10 @@ const Admin = () => {
         description: `User ${isActive ? 'activated' : 'deactivated'} successfully`,
       });
     } catch (error) {
+      console.error('Error updating user status:', error);
       toast({
         title: "Error",
-        description: "Failed to update user status",
+        description: error instanceof Error ? error.message : "Failed to update user status",
         variant: "destructive",
       });
     }
@@ -269,6 +331,34 @@ const Admin = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Debug Section */}
+        <Card className="bg-blue-500/10 backdrop-blur-lg border-blue-500/20 mb-6">
+          <CardHeader>
+            <CardTitle className="text-blue-400">Debug Information</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-white/70 text-sm mb-2">
+              User: {user?.email || 'Not logged in'} | 
+              Admin: {isAdmin ? 'Yes' : 'No'} | 
+              Loading: {loading ? 'Yes' : 'No'}
+            </p>
+            {error && (
+              <p className="text-red-300 mb-2">Error: {error}</p>
+            )}
+            <Button 
+              onClick={async () => {
+                const result = await testSupabaseConnection();
+                console.log('Connection test result:', result);
+              }}
+              variant="outline"
+              size="sm"
+              className="text-white border-white/20 hover:bg-white/10"
+            >
+              Test Supabase Connection
+            </Button>
+          </CardContent>
+        </Card>
 
         {/* Users Table */}
         <Card className="bg-white/10 backdrop-blur-lg border-white/20">

@@ -33,11 +33,15 @@ interface ResumeData {
 
 export const generatePDF = async (data: ResumeData) => {
   try {
+    console.log('Starting PDF generation...');
+    
     // Find the resume preview element
     const resumeElement = document.getElementById('resume-preview');
     if (!resumeElement) {
       throw new Error('Resume preview element not found. Make sure the resume is visible on the page.');
     }
+
+    console.log('Resume element found:', resumeElement);
 
     // Show loading indicator
     const loadingToast = document.createElement('div');
@@ -55,93 +59,125 @@ export const generatePDF = async (data: ResumeData) => {
     `;
     document.body.appendChild(loadingToast);
 
-    // Wait for any pending renders and images to load
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Wait for any pending renders
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     // Ensure all images are loaded
     const images = resumeElement.querySelectorAll('img');
-    await Promise.all(Array.from(images).map(img => {
-      if (img.complete) return Promise.resolve();
-      return new Promise(resolve => {
-        img.onload = resolve;
-        img.onerror = resolve; // Continue even if image fails to load
-      });
-    }));
+    console.log('Found images:', images.length);
+    
+    if (images.length > 0) {
+      await Promise.all(Array.from(images).map(img => {
+        if (img.complete) return Promise.resolve();
+        return new Promise(resolve => {
+          img.onload = resolve;
+          img.onerror = resolve; // Continue even if image fails to load
+        });
+      }));
+    }
 
-    // Get the computed styles and dimensions
-    const computedStyle = window.getComputedStyle(resumeElement);
-    const elementWidth = resumeElement.scrollWidth;
-    const elementHeight = resumeElement.scrollHeight;
+    // Get element dimensions
+    const rect = resumeElement.getBoundingClientRect();
+    const elementWidth = resumeElement.scrollWidth || rect.width;
+    const elementHeight = resumeElement.scrollHeight || rect.height;
 
     console.log('Element dimensions:', { elementWidth, elementHeight });
 
-    // Create canvas with high DPI settings
-    const canvas = await html2canvas(resumeElement, {
-      scale: 2, // High DPI for better quality
+    if (elementWidth === 0 || elementHeight === 0) {
+      throw new Error('Resume element has zero dimensions. Please ensure the resume content is visible.');
+    }
+
+    // Create a temporary container for better rendering
+    const tempContainer = document.createElement('div');
+    tempContainer.style.cssText = `
+      position: absolute;
+      left: -9999px;
+      top: -9999px;
+      width: ${elementWidth}px;
+      height: ${elementHeight}px;
+      background: white;
+      overflow: visible;
+    `;
+    document.body.appendChild(tempContainer);
+
+    // Clone the resume element
+    const clonedElement = resumeElement.cloneNode(true) as HTMLElement;
+    clonedElement.style.cssText = `
+      width: ${elementWidth}px;
+      height: auto;
+      background: white;
+      color: black;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.4;
+      padding: 20px;
+      margin: 0;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      transform: none;
+      position: static;
+      overflow: visible;
+    `;
+
+    // Ensure all text is visible and properly styled
+    const allElements = clonedElement.querySelectorAll('*');
+    allElements.forEach((el: Element) => {
+      const htmlEl = el as HTMLElement;
+      const computedStyle = window.getComputedStyle(htmlEl);
+      
+      // Force visible text
+      if (computedStyle.color === 'rgba(0, 0, 0, 0)' || 
+          computedStyle.color === 'transparent' ||
+          computedStyle.color === 'inherit') {
+        htmlEl.style.color = '#000000';
+      }
+      
+      // Ensure proper font rendering
+      (htmlEl.style as any).webkitFontSmoothing = 'antialiased';
+      (htmlEl.style as any).mozOsxFontSmoothing = 'grayscale';
+      
+      // Fix any layout issues
+      if (htmlEl.style.display === 'none') {
+        htmlEl.style.display = 'block';
+      }
+    });
+
+    tempContainer.appendChild(clonedElement);
+
+    // Wait a bit for the clone to render
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    console.log('Creating canvas...');
+
+    // Create canvas with simpler settings
+    const canvas = await html2canvas(clonedElement, {
+      scale: 1, // Use scale 1 for better compatibility
       useCORS: true,
       allowTaint: true,
       backgroundColor: '#ffffff',
-      logging: false,
+      logging: true, // Enable logging for debugging
       width: elementWidth,
       height: elementHeight,
       windowWidth: elementWidth,
       windowHeight: elementHeight,
-      foreignObjectRendering: true,
-      imageTimeout: 15000,
+      foreignObjectRendering: false, // Disable for better compatibility
+      imageTimeout: 10000,
       removeContainer: true,
-      onclone: (clonedDoc) => {
-        const clonedElement = clonedDoc.getElementById('resume-preview');
-        if (clonedElement) {
-          // Apply styles to ensure proper rendering
-          clonedElement.style.position = 'static';
-          clonedElement.style.transform = 'none';
-          clonedElement.style.width = elementWidth + 'px';
-          clonedElement.style.height = 'auto';
-          clonedElement.style.overflow = 'visible';
-          clonedElement.style.background = '#ffffff';
-          clonedElement.style.color = '#000000';
-          clonedElement.style.fontSize = '14px';
-          clonedElement.style.lineHeight = '1.4';
-          clonedElement.style.fontFamily = 'Arial, sans-serif';
-          
-          // Ensure all text is visible
-          const allElements = clonedElement.querySelectorAll('*');
-          allElements.forEach((el: Element) => {
-            const htmlEl = el as HTMLElement;
-            const computedStyle = window.getComputedStyle(htmlEl);
-            
-            // Fix invisible text
-            if (computedStyle.color === 'rgba(0, 0, 0, 0)' || 
-                computedStyle.color === 'transparent' ||
-                computedStyle.color === 'inherit') {
-              htmlEl.style.color = '#000000';
-            }
-            
-            // Ensure proper font rendering
-            htmlEl.style.webkitFontSmoothing = 'antialiased';
-            htmlEl.style.mozOsxFontSmoothing = 'grayscale';
-            
-            // Fix any layout issues
-            if (htmlEl.style.display === 'none') {
-              htmlEl.style.display = 'block';
-            }
-          });
-        }
-      }
     });
 
-    // Remove loading toast
-    if (document.body.contains(loadingToast)) {
-      document.body.removeChild(loadingToast);
-    }
+    console.log('Canvas created:', { width: canvas.width, height: canvas.height });
 
-    console.log('Canvas dimensions:', { width: canvas.width, height: canvas.height });
+    // Clean up temporary container
+    if (document.body.contains(tempContainer)) {
+      document.body.removeChild(tempContainer);
+    }
 
     if (canvas.width === 0 || canvas.height === 0) {
       throw new Error('Generated canvas is empty. Please ensure the resume content is visible.');
     }
 
-    // Create PDF with A4 dimensions
+    // Create PDF
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -156,64 +192,37 @@ export const generatePDF = async (data: ResumeData) => {
     const imgWidth = pdfWidth - 20; // Leave 10mm margin on each side
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
     
-    let yPosition = 10; // Start with 10mm top margin
-    let remainingHeight = imgHeight;
-    let pageNumber = 1;
+    console.log('PDF dimensions:', { imgWidth, imgHeight, pdfWidth, pdfHeight });
 
-    // Add content to PDF, splitting across pages if necessary
-    while (remainingHeight > 0) {
-      if (pageNumber > 1) {
-        pdf.addPage();
-      }
-      
-      const availableHeight = pdfHeight - 20; // Leave 10mm margin top and bottom
-      const pageHeight = Math.min(remainingHeight, availableHeight);
-      const sourceY = (imgHeight - remainingHeight) * (canvas.height / imgHeight);
-      const sourceHeight = pageHeight * (canvas.height / imgHeight);
-      
-      // Create a temporary canvas for this page
-      const pageCanvas = document.createElement('canvas');
-      const pageCtx = pageCanvas.getContext('2d');
-      
-      if (!pageCtx) {
-        throw new Error('Could not get canvas context');
-      }
-      
-      pageCanvas.width = canvas.width;
-      pageCanvas.height = sourceHeight;
-      
-      // Fill with white background
-      pageCtx.fillStyle = '#ffffff';
-      pageCtx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-      
-      // Draw the portion of the original canvas
-      pageCtx.drawImage(canvas, 0, -sourceY);
-      
-      // Add to PDF
-      const imgData = pageCanvas.toDataURL('image/jpeg', 0.95);
-      pdf.addImage(
-        imgData,
-        'JPEG',
-        10, // 10mm left margin
-        yPosition,
-        imgWidth,
-        pageHeight,
-        undefined,
-        'FAST'
-      );
-      
-      remainingHeight -= pageHeight;
-      pageNumber++;
-      yPosition = 10; // Reset Y position for new pages
-    }
+    // Convert canvas to image
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    
+    // Add image to PDF
+    pdf.addImage(
+      imgData,
+      'JPEG',
+      10, // 10mm left margin
+      10, // 10mm top margin
+      imgWidth,
+      imgHeight,
+      undefined,
+      'FAST'
+    );
 
     // Generate filename
     const fileName = data.personalInfo?.name 
       ? `${data.personalInfo.name.replace(/[^a-zA-Z0-9]/g, '_')}_Resume.pdf`
       : 'Resume.pdf';
     
+    console.log('Saving PDF as:', fileName);
+    
     // Save the PDF
     pdf.save(fileName);
+    
+    // Remove loading toast
+    if (document.body.contains(loadingToast)) {
+      document.body.removeChild(loadingToast);
+    }
     
     // Show success message
     const successToast = document.createElement('div');
@@ -235,6 +244,8 @@ export const generatePDF = async (data: ResumeData) => {
         document.body.removeChild(successToast);
       }
     }, 3000);
+    
+    console.log('PDF generation completed successfully');
     
   } catch (error) {
     console.error('Error generating PDF:', error);
@@ -268,6 +279,6 @@ export const generatePDF = async (data: ResumeData) => {
       }
     }, 5000);
     
-    throw error; // Re-throw for any additional error handling
+    throw error;
   }
 };
