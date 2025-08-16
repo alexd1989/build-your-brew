@@ -28,6 +28,7 @@ interface ResumeData {
     selected?: boolean;
     level?: string;
   }>;
+  template?: string;
   [key: string]: any; // Allow for additional sections
 }
 
@@ -102,12 +103,17 @@ export const generatePDF = async (data: ResumeData) => {
 
     // Clone the resume element
     const clonedElement = resumeElement.cloneNode(true) as HTMLElement;
+    
+    // Apply template-specific styles
+    const template = data.template || 'carver';
+    const templateStyles = getTemplateStyles(template);
+    
     clonedElement.style.cssText = `
       width: ${elementWidth}px;
       height: auto;
       background: white;
       color: black;
-      font-family: Arial, sans-serif;
+      font-family: ${templateStyles.fontFamily};
       font-size: 14px;
       line-height: 1.4;
       padding: 20px;
@@ -280,5 +286,47 @@ export const generatePDF = async (data: ResumeData) => {
     }, 5000);
     
     throw error;
+  }
+};
+
+// Template-specific styles
+const getTemplateStyles = (template: string) => {
+  switch (template) {
+    case 'tesla':
+      return {
+        fontFamily: 'Arial, sans-serif',
+        primaryColor: '#111827',
+        secondaryColor: '#4b5563',
+        accentColor: '#ef4444'
+      };
+    case 'franklin':
+      return {
+        fontFamily: 'Georgia, serif',
+        primaryColor: '#374151',
+        secondaryColor: '#6b7280',
+        accentColor: '#059669'
+      };
+    case 'edison':
+      return {
+        fontFamily: 'Verdana, sans-serif',
+        primaryColor: '#1e293b',
+        secondaryColor: '#64748b',
+        accentColor: '#8b5cf6'
+      };
+    case 'curie':
+      return {
+        fontFamily: 'Helvetica, Arial, sans-serif',
+        primaryColor: '#0f172a',
+        secondaryColor: '#475569',
+        accentColor: '#06b6d4'
+      };
+    case 'carver':
+    default:
+      return {
+        fontFamily: 'Arial, sans-serif',
+        primaryColor: '#1f2937',
+        secondaryColor: '#6b7280',
+        accentColor: '#3b82f6'
+      };
   }
 };

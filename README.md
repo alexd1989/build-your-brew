@@ -1,4 +1,23 @@
-# Welcome to your Lovable project
+# Build Your Brew - Aviation Resume Builder
+
+A professional resume builder specifically designed for aviation professionals, including pilots and cabin crew. Create stunning, ATS-friendly resumes with multiple template options.
+
+## Features
+
+- **5 Professional Templates**: Choose from Carver, Tesla, Franklin, Edison, and Curie templates
+- **Aviation-Specific Sections**: Licenses, certifications, flight hours, aircraft experience
+- **Real-time Preview**: See your resume as you build it
+- **PDF Export**: Download high-quality PDF resumes
+- **AI-Powered Descriptions**: Generate professional descriptions using AI
+- **Template Switching**: Change templates on the fly while building
+
+## Template Options
+
+1. **Carver** - Clean and professional design with balanced typography
+2. **Tesla** - Bold and modern with strong visual hierarchy  
+3. **Franklin** - Classic and traditional with elegant typography
+4. **Edison** - Creative and distinctive with unique layout
+5. **Curie** - Minimalist and sophisticated with clean lines
 
 ## Project info
 

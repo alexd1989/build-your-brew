@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import ResumeBuilder from '@/components/ResumeBuilder';
+import TemplateSelector from '@/components/TemplateSelector';
 import { User, LogIn, FileText, Download, Palette, Shield, Users, Zap, CheckCircle, Star, Clock, Globe, Layout, Edit } from 'lucide-react';
 
 const Index = () => {
@@ -14,6 +15,16 @@ const Index = () => {
   const { toast } = useToast();
   const [resumeData, setResumeData] = useState(null);
   const [resumeLoading, setResumeLoading] = useState(!!id);
+  const [selectedTemplate, setSelectedTemplate] = useState('carver');
+  const [showTemplateSelector, setShowTemplateSelector] = useState(!id);
+
+  const handleTemplateChange = (templateId: string) => {
+    if (templateId === '') {
+      setShowTemplateSelector(true);
+    } else {
+      setSelectedTemplate(templateId);
+    }
+  };
 
   useEffect(() => {
     if (id && user) {
@@ -80,6 +91,25 @@ const Index = () => {
     }
   };
 
+  // If no specific resume ID and showing template selector, show template selection
+  if (!id && showTemplateSelector) {
+    return (
+      <TemplateSelector
+        user={user}
+        loading={loading}
+        selectedTemplate={selectedTemplate}
+        onTemplateSelect={setSelectedTemplate}
+        onContinue={() => {
+          if (user) {
+            window.location.href = '/dashboard';
+          } else {
+            window.location.href = '/auth';
+          }
+        }}
+      />
+    );
+  }
+
   // If no specific resume ID, show landing page
   if (!id) {
     return (
@@ -102,9 +132,14 @@ const Index = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
               {user ? (
-                <Button asChild size="lg">
-                  <Link to="/dashboard">My Resumes</Link>
-                </Button>
+                <>
+                  <Button asChild size="lg">
+                    <Link to="/dashboard">Create Resume</Link>
+                  </Button>
+                  <Button asChild variant="outline" size="lg">
+                    <Link to="/dashboard">My Resumes</Link>
+                  </Button>
+                </>
               ) : (
                 <>
                   <Button asChild size="lg">
@@ -207,9 +242,14 @@ const Index = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {user ? (
-                <Button asChild size="lg">
-                  <Link to="/dashboard">Go to Dashboard</Link>
-                </Button>
+                <>
+                  <Button asChild size="lg">
+                    <Link to="/dashboard">Start Building Resume</Link>
+                  </Button>
+                  <Button asChild variant="outline" size="lg">
+                    <Link to="/dashboard">Go to Dashboard</Link>
+                  </Button>
+                </>
               ) : (
                 <>
                   <Button asChild size="lg">
@@ -269,6 +309,8 @@ const Index = () => {
         initialData={resumeData?.content} 
         onSave={id ? saveResume : undefined}
         readonly={id && !user}
+        selectedTemplate={selectedTemplate}
+        onTemplateChange={handleTemplateChange}
       />
     </div>
   );

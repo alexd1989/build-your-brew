@@ -13,6 +13,8 @@ import { Plus, Trash2, Download, Save, Plane, Award, Clock, Shield, Sparkles } f
 import { generatePDF } from '@/lib/pdf-generator';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { templates } from './TemplateSelector';
+import TemplateSwitcher from './TemplateSwitcher';
 
 interface PersonalInfo {
   name: string;
@@ -100,6 +102,8 @@ interface ResumeBuilderProps {
   initialData?: any;
   onSave?: (content: any) => Promise<void>;
   readonly?: boolean;
+  selectedTemplate?: string;
+  onTemplateChange?: (templateId: string) => void;
 }
 
 // Aviation constants
@@ -123,7 +127,7 @@ const TRAINING_TYPES = [
   'Fire Fighting', 'First Aid/CPR', 'Upset Prevention and Recovery', 'ETOPS Training', 'Other'
 ];
 
-const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderProps) => {
+const ResumeBuilder = ({ initialData, onSave, readonly = false, selectedTemplate = 'carver', onTemplateChange }: ResumeBuilderProps) => {
   const [personalInfo, setPersonalInfo] = useState<PersonalInfo>({
     name: '',
     email: '',
@@ -447,7 +451,8 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
       training, 
       workExperience, 
       education, 
-      skills: skills.filter(skill => skill.selected)
+      skills: skills.filter(skill => skill.selected),
+      template: selectedTemplate
     });
   };
 
@@ -459,10 +464,23 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
             <Plane className="w-10 h-10" />
             Aviation Resume Builder
           </h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-muted-foreground max-w-2xl mx-auto mb-4">
             Create a professional aviation resume tailored for pilots and cabin crew. 
             Include certifications, flight hours, aircraft experience, and aviation-specific qualifications.
           </p>
+          <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
+            <span>Template: {templates.find(t => t.id === selectedTemplate)?.name}</span>
+            {onTemplateChange && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => onTemplateChange('')}
+                className="text-primary hover:text-primary/80"
+              >
+                Change Template
+              </Button>
+            )}
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">
@@ -1186,6 +1204,12 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Resume Preview</CardTitle>
                 <div className="flex gap-2">
+                  {onTemplateChange && (
+                    <TemplateSwitcher
+                      selectedTemplate={selectedTemplate}
+                      onTemplateChange={onTemplateChange}
+                    />
+                  )}
                   {onSave && !readonly && (
                     <Button onClick={handleSave} variant="outline">
                       <Save className="w-4 h-4 mr-2" />
@@ -1199,7 +1223,15 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
                 </div>
               </CardHeader>
               <CardContent>
-                <div id="resume-preview" className="bg-white p-8 rounded-lg min-h-[800px] text-sm leading-relaxed" style={{ lineHeight: '1.6' }}>
+                <div 
+                  id="resume-preview" 
+                  className="bg-white p-8 rounded-lg min-h-[800px] text-sm leading-relaxed" 
+                  style={{ 
+                    lineHeight: '1.6',
+                    fontFamily: templates.find(t => t.id === selectedTemplate)?.colors ? 
+                      (selectedTemplate === 'franklin' ? 'Georgia, serif' : 'Arial, sans-serif') : 'Arial, sans-serif'
+                  }}
+                >
                   {/* Personal Info Header */}
                   <div className="flex items-start gap-6 mb-8 pb-6 border-b">
                     {/* Profile Photo */}
@@ -1215,7 +1247,12 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
                     
                     {/* Personal Info */}
                     <div className={personalInfo.profilePhoto ? "flex-1" : "text-center w-full"}>
-                      <h1 className="text-2xl font-bold text-gray-900 mb-3">
+                      <h1 
+                        className="text-2xl font-bold mb-3"
+                        style={{ 
+                          color: templates.find(t => t.id === selectedTemplate)?.colors.primary || '#1f2937'
+                        }}
+                      >
                         {personalInfo.name || 'Your Name'}
                       </h1>
                       <div className="text-gray-600 space-y-1 leading-relaxed">
@@ -1229,7 +1266,12 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
                   {/* Summary */}
                   {personalInfo.summary && (
                     <div className="mb-8">
-                       <h2 className="text-lg font-semibold text-gray-900 mb-4 border-b border-gray-300 pb-2">
+                       <h2 
+                         className="text-lg font-semibold mb-4 border-b border-gray-300 pb-2"
+                         style={{ 
+                           color: templates.find(t => t.id === selectedTemplate)?.colors.primary || '#1f2937'
+                         }}
+                       >
                          Professional Summary
                        </h2>
                        <p className="text-gray-700 leading-relaxed text-sm" style={{ lineHeight: '1.7' }}>
@@ -1241,7 +1283,12 @@ const ResumeBuilder = ({ initialData, onSave, readonly = false }: ResumeBuilderP
                   {/* Certifications */}
                   {certifications.some(cert => cert.licenseType || cert.certificateNumber) && (
                     <div className="mb-6">
-                      <h2 className="text-lg font-semibold text-gray-900 mb-3 border-b">
+                      <h2 
+                        className="text-lg font-semibold mb-3 border-b"
+                        style={{ 
+                          color: templates.find(t => t.id === selectedTemplate)?.colors.primary || '#1f2937'
+                        }}
+                      >
                         Licenses & Certifications
                       </h2>
                       <div className="space-y-3">
